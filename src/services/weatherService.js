@@ -10,7 +10,7 @@
  *  - Comprehensive error handling
  */
 
-const API_KEY = '89e0024e85cf3e63d85e20db0a2e8e2c';
+const API_KEY = 'de0c4e2511ba65781a38271a328f09a0';
 const BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
 
 /**
@@ -20,13 +20,19 @@ const BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
  * @returns {Promise<Object>} - Resolved with formatted weather data
  * @throws {Error} - Throws descriptive errors for various failure modes
  */
-export async function fetchWeatherData(city) {
+export async function fetchWeatherData(query) {
   // Input validation
-  if (!city || typeof city !== 'string' || city.trim().length === 0) {
+  if (!query) {
     throw new Error('Please enter a valid city name.');
   }
 
-  const trimmedCity = city.trim();
+  const isObjectQuery = typeof query === 'object' && query.lat !== undefined && query.lon !== undefined;
+  
+  if (!isObjectQuery && (typeof query !== 'string' || query.trim().length === 0)) {
+    throw new Error('Please enter a valid city name.');
+  }
+
+  const searchName = isObjectQuery ? query.name : query.trim();
 
   // Retrieve custom API key from localStorage if available
   let apiKey = '';
@@ -40,8 +46,10 @@ export async function fetchWeatherData(city) {
     apiKey = API_KEY;
   }
 
-  // Build the API URL with query parameters
-  const url = `${BASE_URL}?q=${encodeURIComponent(trimmedCity)}&appid=${apiKey}&units=metric`;
+  // Build the API URL with query parameters (either coords or city query)
+  const url = isObjectQuery
+    ? `${BASE_URL}?lat=${query.lat}&lon=${query.lon}&appid=${apiKey}&units=metric`
+    : `${BASE_URL}?q=${encodeURIComponent(searchName)}&appid=${apiKey}&units=metric`;
 
   try {
     // Make the API request using the Fetch API
@@ -55,7 +63,7 @@ export async function fetchWeatherData(city) {
       // If it is an authentication error (401), automatically fall back to mock data
       if (response.status === 401) {
         console.warn('API Authentication Error (401). Falling back to mock weather data.');
-        return getMockWeatherData(trimmedCity);
+        return getMockWeatherData(query);
       }
       handleApiError(response.status, data);
     }
@@ -63,6 +71,10 @@ export async function fetchWeatherData(city) {
     // Format and return the weather data
     const formatted = formatWeatherData(data);
     formatted.isDemo = false;
+    // Keep the nice display name (e.g. "Chikhli, Gujarat, IN") if searched via coordinates
+    if (isObjectQuery && query.displayName) {
+      formatted.city = query.displayName;
+    }
     return formatted;
   } catch (error) {
     // Check if error is network-related or auth-related to use mock data fallback
@@ -74,7 +86,7 @@ export async function fetchWeatherData(city) {
 
     if (error.code === 'AUTH_ERROR' || isNetworkError) {
       console.warn('Authentication or Network error occurred. Falling back to mock weather data.', error);
-      return getMockWeatherData(trimmedCity);
+      return getMockWeatherData(query);
     }
 
     // Re-throw other known errors (like 404 CITY_NOT_FOUND)
@@ -159,11 +171,14 @@ function formatWeatherData(data) {
     visibility,
     dt,
     timezone,
+    coord,
   } = data;
 
   return {
     city: name,
     country: sys?.country || 'N/A',
+    lat: coord?.lat,
+    lon: coord?.lon,
     temperature: Math.round(main.temp),
     feelsLike: Math.round(main.feels_like),
     tempMin: Math.round(main.temp_min),
@@ -209,7 +224,8 @@ function formatTime(unixTimestamp, timezoneOffset) {
  * @returns {Object} - Formatted weather data structure
  */
 export function getMockWeatherData(city) {
-  const cityName = city.trim();
+  const isObjectQuery = typeof city === 'object' && city.name !== undefined;
+  const cityName = isObjectQuery ? city.name : city.trim();
   const lowerCity = cityName.toLowerCase();
   
   // Base weather templates for standard cities
@@ -282,8 +298,10 @@ export function getMockWeatherData(city) {
   const selectedCond = conditions[absHash % conditions.length];
 
   return {
-    city: cityName.charAt(0).toUpperCase() + cityName.slice(1),
-    country: absHash % 2 === 0 ? 'IN' : 'US',
+    city: isObjectQuery && city.displayName ? city.displayName : (cityName.charAt(0).toUpperCase() + cityName.slice(1)),
+    country: isObjectQuery && city.country ? city.country : (absHash % 2 === 0 ? 'IN' : 'US'),
+    lat: isObjectQuery ? city.lat : undefined,
+    lon: isObjectQuery ? city.lon : undefined,
     temperature: temp,
     feelsLike: temp + (humidity > 60 ? 3 : -1),
     tempMin: temp - 3,
@@ -303,3 +321,86 @@ export function getMockWeatherData(city) {
     isDemo: true
   };
 }
+
+/**
+ * Fetches suggestions from OpenWeatherMap Geocoding API.
+ * Prioritizes India (IN) locations but falls back or searches globally.
+ * 
+ * @param {string} query - The search query
+ * @returns {Promise<Array>} - Array of matching locations
+ */
+export async function fetchCitySuggestions(query) {
+  if (!query || query.trim().length < 2) return [];
+
+  const trimmedQuery = query.trim();
+
+  // Retrieve custom API key from localStorage if available
+  let apiKey = '';
+  try {
+    apiKey = localStorage.getItem('vaayuvani_api_key') || '';
+  } catch (e) {
+    console.error('Error reading localStorage:', e);
+  }
+
+  if (!apiKey) {
+    apiKey = API_KEY;
+  }
+
+  // We query with limit=10 to find all matching cities / sub-cities
+  // Direct geocoding: first try matching in India, then globally
+  const indianUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(trimmedQuery)},IN&limit=6&appid=${apiKey}`;
+  const globalUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(trimmedQuery)}&limit=6&appid=${apiKey}`;
+
+  try {
+    // We run both or run Indian first. Let's do a smart general query, but prioritize India.
+    // If the query contains "india" or ",in", we just do the global query.
+    const url = trimmedQuery.toLowerCase().includes('india') || trimmedQuery.includes(',') ? globalUrl : indianUrl;
+    
+    let response = await fetch(url);
+    if (!response.ok) {
+      // If Indian query failed or returned nothing, fall back to global
+      if (url === indianUrl) {
+        response = await fetch(globalUrl);
+      }
+    }
+    
+    let data = [];
+    if (response.ok) {
+      data = await response.json();
+    }
+
+    // If Indian query was run and returned empty, let's try global query
+    if (url === indianUrl && data.length === 0) {
+      const fallbackResponse = await fetch(globalUrl);
+      if (fallbackResponse.ok) {
+        data = await fallbackResponse.json();
+      }
+    }
+
+    // Map the results to a clean format
+    const results = data.map(item => {
+      const hasState = item.state && item.state.trim().length > 0;
+      const displayName = `${item.name}${hasState ? `, ${item.state}` : ''}, ${item.country}`;
+      return {
+        name: item.name,
+        state: item.state || '',
+        country: item.country,
+        lat: item.lat,
+        lon: item.lon,
+        displayName: displayName
+      };
+    });
+
+    // Remove duplicates based on displayName
+    const seen = new Set();
+    return results.filter(item => {
+      const duplicate = seen.has(item.displayName);
+      seen.add(item.displayName);
+      return !duplicate;
+    });
+  } catch (error) {
+    console.error('Error fetching geocoding suggestions:', error);
+    return [];
+  }
+}
+

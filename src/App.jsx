@@ -28,6 +28,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [time, setTime] = useState(new Date());
+  const [isSearchActive, setIsSearchActive] = useState(false);
   
   // Developer settings / API key states
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -103,7 +104,16 @@ function App() {
       setCustomApiKey(newKey.trim());
       setIsSettingsOpen(false);
       if (weatherData) {
-        handleSearch(weatherData.city);
+        if (weatherData.lat !== undefined && weatherData.lon !== undefined) {
+          handleSearch({
+            name: weatherData.city.split(',')[0],
+            displayName: weatherData.city,
+            lat: weatherData.lat,
+            lon: weatherData.lon
+          });
+        } else {
+          handleSearch(weatherData.city);
+        }
       }
     } catch (e) {
       console.error('Error saving API key:', e);
@@ -119,7 +129,16 @@ function App() {
       setCustomApiKey('');
       setIsSettingsOpen(false);
       if (weatherData) {
-        handleSearch(weatherData.city);
+        if (weatherData.lat !== undefined && weatherData.lon !== undefined) {
+          handleSearch({
+            name: weatherData.city.split(',')[0],
+            displayName: weatherData.city,
+            lat: weatherData.lat,
+            lon: weatherData.lon
+          });
+        } else {
+          handleSearch(weatherData.city);
+        }
       }
     } catch (e) {
       console.error('Error resetting API key:', e);
@@ -155,26 +174,14 @@ function App() {
         </header>
 
         {/* Search Bar */}
-        <SearchBar onSearch={handleSearch} isLoading={isLoading} />
+        <SearchBar onSearch={handleSearch} isLoading={isLoading} onFocusChange={setIsSearchActive} />
 
         {/* Error Message */}
         {error && (
           <ErrorMessage message={error} onDismiss={dismissError} />
         )}
 
-        {/* Demo Mode Banner */}
-        {weatherData && weatherData.isDemo && !isLoading && (
-          <div className="demo-banner">
-            <span className="demo-banner__icon">⚡</span>
-            <div className="demo-banner__content">
-              <span className="demo-banner__title">Simulated Weather Data Active</span>
-              <span className="demo-banner__text">The API key is invalid/expired. Running in offline demo mode.</span>
-            </div>
-            <button className="demo-banner__btn" onClick={() => setIsSettingsOpen(true)}>
-              Configure Key
-            </button>
-          </div>
-        )}
+
 
         {/* Loading State */}
         {isLoading && <LoadingSpinner />}
@@ -187,8 +194,8 @@ function App() {
           </div>
         )}
 
-        {/* Welcome Screen (shown when no data, no loading, no error) */}
-        {!weatherData && !isLoading && !error && (
+        {/* Welcome Screen (shown when no data, no loading, no error, and search suggestions are not showing) */}
+        {!weatherData && !isLoading && !error && !isSearchActive && (
           <WelcomeScreen onCitySelect={handleSearch} />
         )}
 
