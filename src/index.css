@@ -202,6 +202,42 @@ body {
   animation: reveal-down 0.9s var(--ease-snappy) both;
 }
 
+.header__back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glass-mid);
+  border-radius: 100px;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--t-spring);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+.header__back-btn:hover {
+  background: rgba(255, 153, 51, 0.12);
+  border-color: rgba(255, 153, 51, 0.35);
+  color: var(--saffron-light);
+  transform: translateX(-3px);
+  box-shadow: 0 4px 15px rgba(255, 153, 51, 0.2);
+}
+
+.header__back-btn:active {
+  transform: translateX(-1px) scale(0.97);
+}
+
+.header__back-btn .back-icon {
+  font-size: 0.95rem;
+}
+
+
 .header__badge {
   display: inline-flex;
   align-items: center;
@@ -2070,7 +2106,8 @@ body:has(.app-container.has-weather) {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: 12px;
     width: 100%;
     margin-bottom: 0;
   }
@@ -2086,6 +2123,7 @@ body:has(.app-container.has-weather) {
   .app-container.has-weather .header__clock {
     padding: 4px 10px;
     border-radius: 50px;
+    margin-left: auto;
   }
   
   .app-container.has-weather .header__clock-time {

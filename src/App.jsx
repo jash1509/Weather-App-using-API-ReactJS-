@@ -158,6 +158,20 @@ function App() {
 
         {/* Header */}
         <header className="header">
+          {weatherData && (
+            <button 
+              className="header__back-btn" 
+              onClick={() => {
+                setWeatherData(null);
+                setError(null);
+              }}
+              aria-label="Back to home screen"
+              title="Go to Home Screen"
+            >
+              <span className="back-icon">🏠</span>
+              <span className="back-text">Home</span>
+            </button>
+          )}
           <div className="header__badge">Made in India • भारत में बनाया गया</div>
           <div className="header__logo-wrap">
             <span className="header__logo" aria-hidden="true">🌬️</span>
