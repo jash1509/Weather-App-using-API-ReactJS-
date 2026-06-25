@@ -330,70 +330,42 @@ body {
 .header__clock {
   display: inline-flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   margin-top: 20px;
-  padding: 12px 28px;
+  padding: 10px 24px;
   background: rgba(26, 17, 10, 0.45); /* Elegant warm dark translucent background */
   border: 1px solid rgba(255, 153, 51, 0.15);
   border-radius: 100px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03);
-}
-
-.header__clock-left {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  line-height: 1.25;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .header__clock-time {
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--saffron-light);
   letter-spacing: 0.02em;
-}
-
-.header__clock-tz {
-  font-family: var(--font-display);
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--saffron-light);
-  opacity: 0.85;
-  letter-spacing: 0.08em;
-}
-
-.header__clock-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  line-height: 1.25;
-  border-left: 1px solid rgba(248, 249, 255, 0.1);
-  padding-left: 18px;
   white-space: nowrap;
-  flex-shrink: 0;
+}
+
+.header__clock-divider {
+  color: rgba(255, 255, 255, 0.15);
+  font-weight: 300;
+  font-size: 0.95rem;
+  user-select: none;
 }
 
 .header__clock-date {
   font-family: var(--font-body);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
   font-weight: 500;
   letter-spacing: 0.01em;
-}
-
-.header__clock-year {
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  font-weight: 400;
-  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 /* ── Search Bar ── */

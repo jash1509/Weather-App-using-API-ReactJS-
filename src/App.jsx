@@ -54,15 +54,11 @@ function App() {
     hour12: true,
   }).toLowerCase();
 
-  const istDateText = time.toLocaleDateString('en-IN', {
+  const istDate = time.toLocaleDateString('en-IN', {
     timeZone: 'Asia/Kolkata',
     weekday: 'long',
     day: 'numeric',
     month: 'long',
-  });
-
-  const istYearText = time.toLocaleDateString('en-IN', {
-    timeZone: 'Asia/Kolkata',
     year: 'numeric',
   });
 
@@ -187,14 +183,9 @@ function App() {
           </p>
           {/* Live IST clock */}
           <div className="header__clock" aria-label="Current India Standard Time">
-            <div className="header__clock-left">
-              <span className="header__clock-time">{istTime}</span>
-              <span className="header__clock-tz">IST</span>
-            </div>
-            <div className="header__clock-right">
-              <span className="header__clock-date">{istDateText}</span>
-              <span className="header__clock-year">{istYearText}</span>
-            </div>
+            <span className="header__clock-time">{istTime} IST</span>
+            <span className="header__clock-divider" aria-hidden="true">|</span>
+            <span className="header__clock-date">{istDate}</span>
           </div>
         </header>
 
